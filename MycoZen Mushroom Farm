@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MycoZen Farm Challenge 🍄</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #2c3e50;
+            overflow-x: hidden;
+        }
+        .game-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90vw;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        .game-title {
+            text-align: center;
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #27ae60;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 10px 0;
+            box-shadow: 0 5px 15px rgba(39,174,96,0.4);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(39,174,96,0.6); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .status-item {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .status-label { font-size: 0.85em; color: #7f8c8d; font-weight: 500; margin-bottom: 5px; }
+        .status-value { font-size: 1.5em; font-weight: 700; }
+        .status-good { color: #27ae60; }
+        .status-warning { color: #f39c12; }
+        .status-danger { color: #e74c3c; }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+        .farm-visual {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 4em;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .day-counter {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #27ae60;
+            margin: 20px 0;
+        }
+        .tip {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border-left: 5px solid #f39c12;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        .results-grid {
+            display: grid;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .result-item {
+            background: linear-gradient(135deg, #d5f4e6, #b2e9d0);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .share-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #bdc3c7;
+        }
+        .score-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        .mushroom-stage {
+            font-size: 2.5em;
+            margin: 20px 0;
+        }
+        @media (max-width: 480px) {
+            .game-container { padding: 20px; }
+            .game-title { font-size: 1.8em; }
+            .status-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Welcome Screen -->
+        <div id="welcome" class="screen active">
+            <h1 class="game-title">🍄 MycoZen Farm Challenge</h1>
+            <p class="subtitle">Become an oyster mushroom farmer! Grow from spawn to harvest in 30 days.</p>
+            <div class="tip">
+                <strong>Did you know?</strong> Oyster mushrooms grow on agricultural waste and thrive in 85-95% humidity! [web:1]
+            </div>
+            <button class="btn" onclick="startGame()">🚀 Start Your Farm!</button>
+        </div>
+
+        <!-- Setup Screen -->
+        <div id="setup" class="screen">
+            <h2 class="game-title">🌱 Choose Your Farm Setup</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">Starter</div>
+                    <div class="status-value">₹5,000</div>
+                    <div>Small farm, low risk</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Standard</div>
+                    <div class="status-value">₹10,000</div>
+                    <div>Medium farm, good yield</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Premium</div>
+                    <div class="status-value">₹20,000</div>
+                    <div>Large farm, high profit</div>
+                </div>
+            </div>
+            <button class="btn" onclick="setupFarm('starter')">Starter Farm</button>
+            <button class="btn" onclick="setupFarm('standard')">Standard Farm</button>
+            <button class="btn" onclick="setupFarm('premium')">Premium Farm</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game" class="screen">
+            <h2 class="game-title">🍄 MycoZen Farm</h2>
+            <div class="day-counter" id="dayCounter">Day 1/30</div>
+            <div class="farm-visual" id="farmVisual">🌱</div>
+            <div class="mushroom-stage" id="mushroomStage">Spawn Stage</div>
+            
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">Humidity</div>
+                    <div class="status-value" id="humidity">92%</div>
+                    <div class="progress-bar"><div class="progress-fill" id="humidityBar" style="width:92%"></div></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Temp</div>
+                    <div class="status-value" id="temp">20°C</div>
+                    <div class="progress-bar"><div class="progress-fill" id="tempBar" style="width:80%"></div></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Growth</div>
+                    <div class="status-value" id="growth">5%</div>
+                    <div class="progress-bar"><div class="progress-fill" id="growthBar" style="width:5%"></div></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Health</div>
+                    <div class="status-value" id="health">100%</div>
+                    <div class="progress-bar"><div class="progress-fill" id="healthBar" style="width:100%"></div></div>
+                </div>
+            </div>
+
+            <div id="currentTip" class="tip"></div>
+            <div id="actionButtons"></div>
+            <button class="btn" onclick="nextDay()" id="nextBtn">⏭️ Next Day</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results" class="screen">
+            <h1 class="game-title">🎉 Harvest Complete!</h1>
+            <div class="score-badge" id="finalScore">Master Farmer! 🌟</div>
+            
+            <div class="results-grid">
+                <div class="result-item">
+                    <div style="font-size: 2em;">🍄</div>
+                    <div id="yieldResult">15 kg harvested!</div>
+                </div>
+                <div class="result-item">
+                    <div>💰</div>
+                    <div id="profitResult">₹45,000 profit</div>
+                </div>
+                <div class="result-item">
+                    <div>📈</div>
+                    <div id="roiResult">450% ROI</div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <strong>You learned:</strong><br>
+                • Oyster mushrooms need 85-95% humidity [web:1]<br>
+                • Ideal temp: 18-22°C [web:1]<br>
+                • 30-45 day growth cycle [web:1]<br>
+                • High-density farming works! 🌱
+            </div>
+
+            <div class="share-section">
+                <button class="btn" onclick="shareScore()">📱 Share Your Success</button>
+                <button class="btn" onclick="playAgain()">🔄 Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            day: 1,
+            farmType: '',
+            investment: 0,
+            humidity: 92,
+            temperature: 20,
+            growth: 5,
+            health: 100,
+            yield: 0,
+            events: []
+        };
+
+        const farmConfigs = {
+            starter: { investment: 5000, maxYield: 10, risk: 0.2 },
+            standard: { investment: 10000, maxYield: 20, risk: 0.1 },
+            premium: { investment: 20000, maxYield: 35, risk: 0.05 }
+        };
+
+        const tips = [
+            "💧 Oyster mushrooms need 85-95% humidity to thrive!",
+            "🌡️ Ideal temperature: 18-22°C for best growth.",
+            "🪵 They grow on agricultural waste like paddy straw!",
+            "⏱️ Full harvest in 30-45 days.",
+            "💪 High protein content - great for health!",
+            "🌱 Perfect for high-density urban farming."
+        ];
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startGame() {
+            showScreen('setup');
+        }
+
+        function setupFarm(type) {
+            gameState.farmType = type;
+            gameState.investment = farmConfigs[type].investment;
+            showScreen('game');
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('dayCounter').textContent = `Day ${gameState.day}/30`;
+            
+            // Update status values and colors
+            const statusElements = {
+                humidity: document.getElementById('humidity'),
+                temp: document.getElementById('temp'),
+                growth: document.getElementById('growth'),
+                health: document.getElementById('health')
+            };
+            
+            const bars = {
+                humidityBar: document.getElementById('humidityBar'),
+                tempBar: document.getElementById('tempBar'),
+                growthBar: document.getElementById('growthBar'),
+                healthBar: document.getElementById('healthBar')
+            };
+
+            // Update values
+            statusElements.humidity.textContent = `${gameState.humidity}%`;
+            statusElements.temp.textContent = `${gameState.temperature}°C`;
+            statusElements.growth.textContent = `${gameState.growth}%`;
+            statusElements.health.textContent = `${gameState.health}%`;
+
+            // Update bars
+            bars.humidityBar.style.width = `${Math.max(0, Math.min(100, gameState.humidity))}%`;
+            bars.tempBar.style.width = `${Math.max(0, Math.min(100, (gameState.temperature-15)/10*100))}%`;
+            bars.growthBar.style.width = `${gameState.growth}%`;
+            bars.healthBar.style.width = `${gameState.health}%`;
+
+            // Color coding
+            Object.keys(statusElements).forEach(key => {
+                const el = statusElements[key];
+                if (key === 'humidity') {
+                    el.className = gameState.humidity > 85 && gameState.humidity < 95 ? 'status-value status-good' : 
+                                  gameState.humidity > 70 ? 'status-value status-warning' : 'status-value status-danger';
+                } else if (key === 'temp') {
+                    el.className = gameState.temperature > 18 && gameState.temperature < 22 ? 'status-value status-good' : 
+                                  gameState.temperature > 15 ? 'status-value status-warning' : 'status-value status-danger';
+                }
+            });
+
+            // Farm visual and stage
+            const visuals = ['🌱', ' mycelium', '🍄', '🍄✨', '🍄🎉'];
+            document.getElementById('farmVisual').textContent = visuals[Math.floor(gameState.growth / 20)];
+            document.getElementById('mushroomStage').textContent = 
+                gameState.growth < 25 ? 'Spawn Stage' :
+                gameState.growth < 50 ? 'Mycelium Growth' :
+                gameState.growth < 75 ? 'Pin Formation' : 'Harvest Ready!';
+
+            // Random tip
+            document.getElementById('currentTip').textContent = tips[Math.floor(Math.random() * tips.length)];
+        }
+
+        function nextDay() {
+            if (gameState.day >= 30) {
+                endGame();
+                return;
+            }
+
+            // Simulate daily changes
+            gameState.humidity -= (Math.random() - 0.3) * 8; // Natural fluctuation
+            gameState.temperature += (Math.random() - 0.5) * 3;
+            gameState.growth += 2 + Math.random() * 2;
+            gameState.health -= Math.random() * 3;
+
+            // Boundaries
+            gameState.humidity = Math.max(50, Math.min(100, gameState.humidity));
+            gameState.temperature = Math.max(12, Math.min(30, gameState.temperature));
+            gameState.growth = Math.min(100, gameState.growth);
+            gameState.health = Math.max(0, Math.min(100, gameState.health));
+
+            // Health penalties
+            if (gameState.humidity < 80 || gameState.humidity > 98) gameState.health -= 5;
+            if (gameState.temperature < 16 || gameState.temperature > 24) gameState.health -= 3;
+
+            gameState.day++;
+
+            updateDisplay();
+            
+            if (gameState.day % 7 === 0) {
+                showManagementDecision();
+            }
+        }
+
+        function showManagementDecision() {
+            const actions = document.getElementById('actionButtons');
+            actions.innerHTML = `
+                <button class="btn" onclick="manageHumidity()">💧 Adjust Humidity</button>
+                <button class="btn" onclick="manageTemp()">🌡️ Control Temperature</button>
+                <button class="btn" onclick="nextDay()">➡️ Continue</button>
+            `;
+            document.getElementById('nextBtn').style.display = 'none';
+        }
+
+        function manageHumidity() {
+            gameState.humidity = 90;
+            document.getElementById('currentTip').textContent = "✅ Perfect! 85-95% humidity is ideal for oyster mushrooms.";
+            document.getElementById('actionButtons').innerHTML = '';
+            document.getElementById('nextBtn').style.display = 'block';
+        }
+
+        function manageTemp() {
+            gameState.temperature = 20;
+            document.getElementById('currentTip').textContent = "✅ Great! 18-22°C is the sweet spot for growth.";
+            document.getElementById('actionButtons').innerHTML = '';
+            document.getElementById('nextBtn').style.display = 'block';
+        }
+
+        function endGame() {
+            gameState.yield = Math.floor((gameState.growth / 100) * farmConfigs[gameState.farmType].maxYield * 
+                             (gameState.health / 100) * (1 - farmConfigs[gameState.farmType].risk));
+            
+            const profit = gameState.yield * 3000 - gameState.investment; // ₹3/kg market price
+            const roi = Math.round((profit / gameState.investment) * 100);
+
+            document.getElementById('yieldResult').textContent = `${gameState.yield} kg harvested! 🍄`;
+            document.getElementById('profitResult').textContent = `₹${profit.toLocaleString()} profit`;
+            document.getElementById('roiResult').textContent = `${roi}% ROI`;
+            
+            const score = roi > 300 ? '🌟 Master Farmer!' : roi > 150 ? '⭐ Expert Farmer!' : '👍 Good Farmer!';
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalScore').style.background = roi > 300 ? 'linear-gradient(45deg, #e74c3c, #c0392b)' : 
+                                                                  roi > 150 ? 'linear-gradient(45deg, #f39c12, #e67e22)' : 
+                                                                  'linear-gradient(45deg, #27ae60, #2ecc71)';
+
+            showScreen('results');
+        }
+
+        function shareScore() {
+            const text = `I just harvested ${gameState.yield}kg of oyster mushrooms in MycoZen Farm Challenge! ${Math.round((gameState.yield*3000-gameState.investment)/gameState.investment*100)}% ROI! 🍄🌱 Try it: ${window.location.href}`;
+            if (navigator.share) {
+                navigator.share({ title: 'MycoZen Farm Challenge', text: text, url: window.location.href });
+            } else {
+                navigator.clipboard.writeText(text).then(() => alert('Score copied! Share anywhere! 📋'));
+            }
+        }
+
+        function playAgain() {
+            gameState = {
+                day: 1,
+                farmType: '',
+                investment: 0,
+                humidity: 92,
+                temperature: 20,
+                growth: 5,
+                health: 100,
+                yield: 0,
+                events: []
+            };
+            showScreen('setup');
+        }
+
+        // Initialize
+        updateDisplay();
+    </script>
+</body>
+</html>
